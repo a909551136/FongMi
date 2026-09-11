@@ -1,20 +1,19 @@
 import com.android.build.api.artifact.SingleArtifact
 import com.fongmi.gradle.AbiApkPackaging
-
 plugins {
     alias libs.plugins.android.application
 }
-
 def localProps = new Properties()
-rootProject.file('local.properties').withInputStream {
-    localProps.load(it)
+def localFile = rootProject.file('local.properties')
+if(localFile.exists()){
+    localFile.withInputStream {
+        localProps.load(it)
+    }
 }
 
 android {
     namespace = 'com.fongmi.android.tv'
-
     compileSdk libs.versions.compileSdk.get().toInteger()
-
     defaultConfig {
         applicationId "com.fongmi.android.tv"
         minSdk libs.versions.minSdk.get().toInteger()
@@ -27,9 +26,7 @@ android {
             }
         }
     }
-
     flavorDimensions = ["device"]
-
     productFlavors {
         leanback {
             dimension "device"
@@ -38,30 +35,32 @@ android {
             dimension "device"
         }
     }
-
     buildFeatures {
         buildConfig = true
         viewBinding = true
     }
-
     signingConfigs {
-        release {
-            storeFile file(localProps['storeFile'])
-            keyAlias localProps['keyAlias']
-            keyPassword localProps['storePassword']
-            storePassword localProps['storePassword']
+        // 只有storeFile存在才创建release签名配置，CI环境跳过
+        if(localProps['storeFile'] != null && localProps['storeFile'].trim() != ""){
+            release {
+                storeFile file(localProps['storeFile'])
+                keyAlias localProps['keyAlias']
+                keyPassword localProps['storePassword']
+                storePassword localProps['storePassword']
+            }
         }
     }
-
     buildTypes {
         release {
             minifyEnabled = true
             shrinkResources = true
-            signingConfig = signingConfigs.release
+            // 如果签名配置存在才启用签名，否则不签名
+            if (signingConfigs.hasProperty('release')) {
+                signingConfig = signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules-media.pro'
         }
     }
-
     configurations.configureEach {
         exclude group: 'stax', module: 'stax-api'
         exclude group: 'xpp3', module: 'xpp3'
@@ -70,21 +69,17 @@ android {
             force libs.okhttp
         }
     }
-
     lint {
         disable 'UnsafeOptInUsageError'
         disable 'ExpiredTargetSdkVersion'
     }
-
     compileOptions {
         coreLibraryDesugaringEnabled = true
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
 }
-
 AbiApkPackaging.configure(project, SingleArtifact.APK.INSTANCE)
-
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.aar"])
     implementation project(':catvod')
