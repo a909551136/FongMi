@@ -40,7 +40,7 @@ android {
         viewBinding = true
     }
     signingConfigs {
-        // 只有storeFile存在才创建release签名配置，CI环境跳过
+        // 只有本地存在签名文件才创建release签名
         if(localProps['storeFile'] != null && localProps['storeFile'].trim() != ""){
             release {
                 storeFile file(localProps['storeFile'])
@@ -54,9 +54,10 @@ android {
         release {
             minifyEnabled = true
             shrinkResources = true
-            // 如果签名配置存在才启用签名，否则不签名
-            if (signingConfigs.hasProperty('release')) {
-                signingConfig = signingConfigs.release
+            // 安全查找签名配置，找不到就不设置签名
+            def releaseSigning = signingConfigs.findByName("release")
+            if (releaseSigning != null) {
+                signingConfig = releaseSigning
             }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules-media.pro'
         }
