@@ -40,25 +40,21 @@ android {
         viewBinding = true
     }
     signingConfigs {
-        // 只有本地存在签名文件才创建release签名
-        if(localProps['storeFile'] != null && localProps['storeFile'].trim() != ""){
-            release {
-                storeFile file(localProps['storeFile'])
-                keyAlias localProps['keyAlias']
-                keyPassword localProps['storePassword']
-                storePassword localProps['storePassword']
-            }
-        }
+        // CI编译时注释掉release签名，本地电脑编译时可以取消注释填入签名信息
+/*
+    release {
+        storeFile file(localProps['storeFile'])
+        keyAlias localProps['keyAlias']
+        keyPassword localProps['storePassword']
+        storePassword localProps['storePassword']
+    }
+*/
     }
     buildTypes {
         release {
             minifyEnabled = true
             shrinkResources = true
-            // 安全查找签名配置，找不到就不设置签名
-            def releaseSigning = signingConfigs.findByName("release")
-            if (releaseSigning != null) {
-                signingConfig = releaseSigning
-            }
+            signingConfig null
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-rules-media.pro'
         }
     }
