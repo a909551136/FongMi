@@ -20,25 +20,24 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 自动生成 local.properties，写入SDK路径
+      # 关键：在gradle运行之前创建local.properties，防止项目配置阶段找不到文件
       - name: Create local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-      # 直接使用系统gradle，不再执行gradle wrapper
-      - name: Build Mobile APK
-        run: gradle :app:assembleMobileArm64V8aRelease
+      - name: Build leanback(TV) APK
+        run: gradle :app:assembleLeanbackRelease
 
-      - name: Build TV APK
-        run: gradle :app:assembleLeanbackArm64V8aRelease
-
-      - name: Upload Mobile APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mobile-APK
-          path: app/build/outputs/apk/mobileArm64V8a/release/*.apk
+      - name: Build mobile(手机) APK
+        run: gradle :app:assembleMobileRelease
 
       - name: Upload TV APK
         uses: actions/upload-artifact@v4
         with:
           name: TV-APK
-          path: app/build/outputs/apk/leanbackArm64V8a/release/*.apk
+          path: app/build/outputs/apk/leanback/release/*.apk
+
+      - name: Upload Mobile APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mobile-APK
+          path: app/build/outputs/apk/mobile/release/*.apk
